@@ -28,6 +28,28 @@ jobs:
       run: |
         pytest
 
+    # --- ALERT: Agar tests fail hote hain toh email jayega ---
+    - name: Notify Test Failure via Email
+      if: failure() # Yeh step TABHI chalega agar pytest fail hoga
+      uses: dawidd6/action-send-mail@v3
+      with:
+        server_address: ://gmail.com
+        server_port: 465
+        username: ${{ secrets.NOTIFICATION_EMAIL_USER }} # Aapka sender email account
+        password: ${{ secrets.NOTIFICATION_EMAIL_PASS }} # Aapka App Password
+        subject: "🚨 FastAPI CI Alert: Tests Failed on master!"
+        to: custom-email-address@domain.com # 👈 Yahan apna woh email likhein jahan alert chahiye (unlinked to GitHub)
+        from: GitHub Actions Workflow
+        body: |
+          Hi Team,
+          
+          FastAPI CI Pipeline ke 'test' job mein error aayi hai.
+          
+          - Commit: ${{ github.sha }}
+          - Triggered by: ${{ github.actor }}
+          
+          Kripa karke repository ke Actions tab mein logs check karein.
+
   # --- JOB 2: CD (Continuous Delivery) ---
   build-and-push:
     needs: test # Runs ONLY if 'test' job succeeds
@@ -54,4 +76,25 @@ jobs:
       with:
         context: .
         push: true
-        tags: ghcr.io/aryakumarjaiswal/fastapi-app:latest
+        tags: ghcr.io/aryakumarjaiswal/fastapi-app:latest 
+
+    # --- ALERT: Agar Docker build & push fail hota hai toh email jayega ---
+    - name: Notify Deployment Failure via Email
+      if: failure() # Yeh step TABHI chalega agar Docker build fail hoga
+      uses: dawidd6/action-send-mail@v3
+      with:
+        server_address: ://gmail.com
+        server_port: 465
+        username: ${{ secrets.NOTIFICATION_EMAIL_USER }}
+        password: ${{ secrets.NOTIFICATION_EMAIL_PASS }}
+        subject: "🚨 FastAPI CD Alert: Docker Build/Push Failed!"
+        to: custom-email-address@domain.com # 👈 Yahan bhi wahi custom email ID likhein
+        from: GitHub Actions Workflow
+        body: |
+          Hi Team,
+          
+          FastAPI CD Pipeline ke 'build-and-push' job mein error aayi hai. Docker image push nahi ho paayi.
+          
+          - Commit: ${{ github.sha }}
+          
+          Kripa karke GitHub Actions par details check karein.
